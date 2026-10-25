@@ -32,12 +32,7 @@ export function ConfirmCancel({ trade, isPending, onConfirm, onClose }: ConfirmC
           <button type="button" className="btn" onClick={onClose} autoFocus>
             Keep trade
           </button>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={onConfirm}
-            disabled={isPending}
-          >
+          <button type="button" className="btn btn-danger" onClick={onConfirm} disabled={isPending}>
             {isPending ? 'Cancelling…' : 'Cancel trade'}
           </button>
         </div>

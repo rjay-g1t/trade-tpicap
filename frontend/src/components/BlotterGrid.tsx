@@ -6,12 +6,39 @@ import {
   type GetRowIdParams,
   type ICellRendererParams,
   type RowClassRules,
+  themeQuartz,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useMemo } from 'react';
 import { formatNotional, formatPrice, formatQuantity, formatTimestamp } from '../utils/format';
+import { SymbolBadge } from './SymbolBadge';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+// Colours come from the CSS tokens in styles.css, so the grid follows the light/dark theme.
+const blotterTheme = themeQuartz.withParams({
+  fontFamily: 'inherit',
+  fontSize: 14,
+  headerFontSize: 12,
+  headerFontWeight: 700,
+  rowHeight: 52,
+  headerHeight: 44,
+  backgroundColor: 'var(--surface)',
+  foregroundColor: 'var(--text)',
+  chromeBackgroundColor: 'var(--surface)',
+  headerBackgroundColor: 'var(--surface)',
+  headerTextColor: 'var(--text)',
+  borderColor: 'var(--border)',
+  accentColor: 'var(--accent)',
+  rowHoverColor: 'var(--row-hover)',
+  oddRowBackgroundColor: 'var(--surface)',
+  valueChangeValueHighlightBackgroundColor: 'var(--flash)',
+  wrapperBorder: false,
+  wrapperBorderRadius: 0,
+  columnBorder: false,
+  headerColumnBorder: false,
+  browserColorScheme: 'inherit',
+});
 
 export interface BlotterGridProps {
   trades: Trade[];
@@ -55,12 +82,8 @@ export function BlotterGrid({ trades, quickFilter, onAmend, onCancel }: BlotterG
         filterValueGetter: ({ data }) => (data ? new Date(data.tradeTimestamp) : null),
         filterParams: { comparator: compareDay },
       },
-      { field: 'symbol', width: 110 },
-      {
-        field: 'side',
-        width: 90,
-        cellClass: ({ value }) => (value === 'BUY' ? 'side-buy' : 'side-sell'),
-      },
+      { field: 'symbol', width: 130, cellRenderer: SymbolCell },
+      { field: 'side', width: 100, cellRenderer: SideCell },
       {
         field: 'quantity',
         type: 'rightAligned',
@@ -107,6 +130,7 @@ export function BlotterGrid({ trades, quickFilter, onAmend, onCancel }: BlotterG
   return (
     <div className="grid">
       <AgGridReact<Trade>
+        theme={blotterTheme}
         rowData={trades}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
@@ -119,6 +143,19 @@ export function BlotterGrid({ trades, quickFilter, onAmend, onCancel }: BlotterG
         overlayNoRowsTemplate="No trades match the current filters."
       />
     </div>
+  );
+}
+
+function SymbolCell({ value }: ICellRendererParams<Trade, Trade['symbol']>) {
+  return value ? <SymbolBadge symbol={value} /> : null;
+}
+
+function SideCell({ value }: ICellRendererParams<Trade, Trade['side']>) {
+  if (!value) return null;
+  return (
+    <span className={value === 'BUY' ? 'side positive' : 'side negative'}>
+      <span aria-hidden="true">{value === 'BUY' ? '▲' : '▼'}</span> {value}
+    </span>
   );
 }
 
@@ -147,7 +184,7 @@ function RowActions({ trade, onAmend, onCancel }: RowActionsProps) {
       </button>
       <button
         type="button"
-        className="btn btn-small btn-danger"
+        className="btn btn-small btn-danger-ghost"
         disabled={cancelled}
         onClick={() => onCancel(trade)}
       >

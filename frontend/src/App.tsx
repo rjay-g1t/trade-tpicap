@@ -4,11 +4,15 @@ import { errorMessage } from './api/client';
 import { BlotterGrid } from './components/BlotterGrid';
 import { ConfirmCancel } from './components/ConfirmCancel';
 import { PositionsPanel } from './components/PositionsPanel';
+import { StatsBar } from './components/StatsBar';
 import { ToastList, useToasts } from './components/Toasts';
 import { Toolbar } from './components/Toolbar';
 import { TradeForm } from './components/TradeForm';
 import { useAmendTrade, useCancelTrade, useCreateTrade, useTrades } from './trades/queries';
+import { summarizeTrades } from './trades/summary';
 import { useTradeStream } from './trades/useTradeStream';
+import { formatCompact } from './utils/format';
+import { useTheme } from './utils/theme';
 
 type Drawer = { mode: 'create' } | { mode: 'amend'; tradeId: string };
 
@@ -21,6 +25,7 @@ export function App() {
   const amendTrade = useAmendTrade();
   const cancelTrade = useCancelTrade();
   const { toasts, notify, dismiss } = useToasts();
+  const { theme, toggleTheme } = useTheme();
 
   const [quickFilter, setQuickFilter] = useState('');
   const [showCancelled, setShowCancelled] = useState(true);
@@ -32,6 +37,7 @@ export function App() {
     () => (showCancelled ? trades : trades.filter((trade) => trade.status === 'ACTIVE')),
     [trades, showCancelled],
   );
+  const summary = useMemo(() => summarizeTrades(trades), [trades]);
 
   // Look trades up by id on every render, so open dialogs show live changes.
   const findTrade = (tradeId: string | null) =>
@@ -76,23 +82,49 @@ export function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Trade Blotter</h1>
+      <StatsBar summary={summary} connection={connection} />
+
+      <header className="navbar">
+        <div className="container navbar-inner">
+          <span className="brand">
+            <span className="brand-mark" aria-hidden="true" />
+            Trade Blotter
+          </span>
+          <span className="spacer" />
+          <button
+            type="button"
+            className="btn btn-icon"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+        </div>
       </header>
 
-      <Toolbar
-        quickFilter={quickFilter}
-        onQuickFilterChange={setQuickFilter}
-        showCancelled={showCancelled}
-        onShowCancelledChange={setShowCancelled}
-        tradeCount={visibleTrades.length}
-        connection={connection}
-        isRefreshing={tradesQuery.isFetching}
-        onRefresh={() => void tradesQuery.refetch()}
-        onNewTrade={() => setDrawer({ mode: 'create' })}
-      />
+      <main className="container page">
+        <section className="page-head">
+          <h1>Today’s trades</h1>
+          <p className="muted">
+            {summary.active} active trades across {summary.symbols} symbols, with a gross notional
+            of {formatCompact(summary.grossNotional)}.{' '}
+            {summary.cancelled > 0 && `${summary.cancelled} cancelled.`}
+          </p>
+        </section>
 
-      <main className="workspace">
+        <PositionsPanel />
+
+        <Toolbar
+          quickFilter={quickFilter}
+          onQuickFilterChange={setQuickFilter}
+          showCancelled={showCancelled}
+          onShowCancelledChange={setShowCancelled}
+          tradeCount={visibleTrades.length}
+          isRefreshing={tradesQuery.isFetching}
+          onRefresh={() => void tradesQuery.refetch()}
+          onNewTrade={() => setDrawer({ mode: 'create' })}
+        />
+
         <div className="blotter">
           {tradesQuery.isPending && <p className="placeholder">Loading trades…</p>}
           {tradesQuery.isError && (
@@ -112,7 +144,6 @@ export function App() {
             />
           )}
         </div>
-        <PositionsPanel />
       </main>
 
       {drawer && (drawer.mode === 'create' || amending) && (

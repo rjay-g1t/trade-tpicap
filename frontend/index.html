@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trade Blotter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <script>
+      // Apply the saved theme before the first paint, so dark mode doesn't flash white.
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch {
+        // Storage can be blocked; the app falls back to the system setting.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

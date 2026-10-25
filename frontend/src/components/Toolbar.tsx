@@ -1,22 +1,18 @@
-import type { ConnectionStatus } from '../trades/useTradeStream';
-
 export interface ToolbarProps {
   quickFilter: string;
   onQuickFilterChange: (value: string) => void;
   showCancelled: boolean;
   onShowCancelledChange: (value: boolean) => void;
   tradeCount: number;
-  connection: ConnectionStatus;
   isRefreshing: boolean;
   onRefresh: () => void;
   onNewTrade: () => void;
 }
 
-const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
-  connecting: 'Connecting…',
-  live: 'Live',
-  reconnecting: 'Reconnecting…',
-};
+const VIEWS = [
+  { label: 'All trades', showCancelled: true },
+  { label: 'Active only', showCancelled: false },
+] as const;
 
 export function Toolbar({
   quickFilter,
@@ -24,36 +20,39 @@ export function Toolbar({
   showCancelled,
   onShowCancelledChange,
   tradeCount,
-  connection,
   isRefreshing,
   onRefresh,
   onNewTrade,
 }: ToolbarProps) {
   return (
     <div className="toolbar">
-      <input
-        type="search"
-        id="quick-filter"
-        className="input quick-filter"
-        placeholder="Filter trades…"
-        aria-label="Filter trades"
-        value={quickFilter}
-        onChange={(event) => onQuickFilterChange(event.target.value)}
-      />
-      <label className="toggle">
-        <input
-          type="checkbox"
-          id="show-cancelled"
-          checked={showCancelled}
-          onChange={(event) => onShowCancelledChange(event.target.checked)}
-        />
-        Show cancelled
-      </label>
-      <span className="muted">{tradeCount} trades</span>
+      <div className="tabs" role="group" aria-label="Which trades to show">
+        {VIEWS.map((view) => (
+          <button
+            key={view.label}
+            type="button"
+            className="tab"
+            aria-pressed={showCancelled === view.showCancelled}
+            onClick={() => onShowCancelledChange(view.showCancelled)}
+          >
+            {view.label}
+          </button>
+        ))}
+      </div>
+      <span className="muted toolbar-count">{tradeCount} trades</span>
       <span className="spacer" />
-      <span className={`connection connection-${connection}`} role="status">
-        {CONNECTION_LABEL[connection]}
-      </span>
+      <label className="search">
+        <SearchIcon />
+        <input
+          type="search"
+          id="quick-filter"
+          className="search-input"
+          placeholder="Search trades"
+          aria-label="Search trades"
+          value={quickFilter}
+          onChange={(event) => onQuickFilterChange(event.target.value)}
+        />
+      </label>
       <button type="button" className="btn" onClick={onRefresh} disabled={isRefreshing}>
         {isRefreshing ? 'Refreshing…' : 'Refresh'}
       </button>
@@ -61,5 +60,14 @@ export function Toolbar({
         New trade
       </button>
     </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg className="search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" strokeWidth="2" />
+    </svg>
   );
 }
