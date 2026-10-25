@@ -172,7 +172,7 @@ App
 - [x] `shared/`: Zod schemas, inferred types, event types, error envelope type
 - [x] `database/`: initial migration (`trades`, `trade_events`, sequence, indexes)
 - [x] Seed generator + unit tests
-- [x] Start `docs/PROMPT_LOG.md` and `docs/AI_USAGE.md`
+- [x] Start `docs/AI_USAGE.md`
 
 ### Phase 2 — Backend (~3h)
 

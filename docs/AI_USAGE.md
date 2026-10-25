@@ -1,7 +1,6 @@
 # AI Usage Report
 
-> Living document — updated as development progresses. See [PROMPT_LOG.md](PROMPT_LOG.md) for the
-> prompts themselves.
+> Living document — updated as development progresses.
 
 ## Tools used
 
