@@ -14,7 +14,7 @@ test-tp-icp/
 ├── backend/           # Fastify API + SSE
 ├── frontend/          # Vite + React + TS
 ├── database/          # SQL migrations, seed notes, ERD
-├── docs/              # PLAN.md, ARCHITECTURE.md, AI_USAGE.md, PROMPT_LOG.md
+├── docs/              # PLAN.md, AI_USAGE.md
 ├── docker-compose.yml
 └── README.md
 ```
@@ -33,7 +33,7 @@ test-tp-icp/
 | Real time             | **Server-Sent Events** (`GET /api/events`)                              | All writes go through REST, so only server→client push is needed. `EventSource` reconnects automatically and supports `Last-Event-ID` replay |
 | Frontend server state | **TanStack Query**                                                      | Caching/refetching; SSE events patch the query cache directly                                                                                |
 | Grid                  | **AG Grid Community**                                                   | Virtualisation, sorting, filtering and row-flash built in                                                                                    |
-| Forms                 | **react-hook-form** + `zodResolver` (shared schemas)                    | Identical validation on client and server                                                                                                    |
+| Forms                 | **react-hook-form** + a resolver around the shared Zod schema           | Identical validation on client and server                                                                                                    |
 | Testing               | **Vitest** + React Testing Library                                      | One runner across the whole repo                                                                                                             |
 
 ### Open decisions (defaults in bold)
@@ -90,17 +90,17 @@ type AmendTradeInput = Partial<CreateTradeInput> & { expectedVersion: number };
 
 ## 4. API Design
 
-| Method  | Path                      | Purpose                                                             |
-| ------- | ------------------------- | ------------------------------------------------------------------- |
-| `GET`   | `/api/trades`             | List trades (≤1k → return all; optional query filters)              |
-| `GET`   | `/api/trades/:id`         | Get one trade                                                       |
-| `POST`  | `/api/trades`             | Create → `201`                                                      |
-| `PATCH` | `/api/trades/:id`         | Amend (requires `expectedVersion`)                                  |
-| `POST`  | `/api/trades/:id/cancel`  | Status transition to `CANCELLED` (trades are never deleted)         |
-| `GET`   | `/api/trades/:id/history` | Audit trail                                                         |
-| `GET`   | `/api/positions`          | Net qty / avg price / notional by symbol (bonus)                    |
-| `GET`   | `/api/events`             | SSE stream: `trade.created` \| `trade.amended` \| `trade.cancelled` |
-| `GET`   | `/health`                 | Liveness                                                            |
+| Method  | Path                      | Purpose                                                              |
+| ------- | ------------------------- | -------------------------------------------------------------------- |
+| `GET`   | `/api/trades`             | List trades (≤1k → return all; optional query filters)               |
+| `GET`   | `/api/trades/:id`         | Get one trade                                                        |
+| `POST`  | `/api/trades`             | Create → `201`                                                       |
+| `PATCH` | `/api/trades/:id`         | Amend (requires `expectedVersion`)                                   |
+| `POST`  | `/api/trades/:id/cancel`  | Status transition to `CANCELLED` (trades are never deleted)          |
+| `GET`   | `/api/trades/:id/history` | Audit trail                                                          |
+| `GET`   | `/api/positions`          | Net quantity and notional by symbol, active trades only (bonus)      |
+| `GET`   | `/api/events`             | SSE stream: `trade` events (kind CREATED/AMENDED/CANCELLED), `reset` |
+| `GET`   | `/health`                 | Liveness                                                             |
 
 **Error envelope** (consistent across all endpoints):
 
@@ -130,15 +130,17 @@ routes (HTTP + schema)
 
 ```
 App
-├── Toolbar        quick filter, status/side toggles, Refresh, "New trade", live-connection indicator
-├── BlotterGrid    AG Grid: per-column sort/filter, row flash on remote change, cancelled rows greyed
-├── TradeDrawer    create / amend form (shared Zod schema), inline server errors
-├── CancelConfirm  confirmation dialog
-└── PositionsPanel (bonus)
+├── StatsBar        headline figures (trades, active, symbols, gross notional, buy/sell) + live status
+├── PositionsPanel  highlight cards: largest longs, largest shorts, most traded (bonus)
+├── Toolbar         All / Active view, quick search, Refresh, "New trade"
+├── BlotterGrid     AG Grid: per-column sort/filter, cell flash on change, cancelled rows greyed
+├── TradeForm       create / amend drawer (shared Zod schema), inline server errors, TradeHistory
+├── ConfirmCancel   confirmation dialog
+└── ToastList       success / error messages
 ```
 
-- **`useTradeStream()`** — opens the `EventSource`, applies events to the TanStack Query cache via a pure reducer (`setQueryData`), and invalidates the cache on reconnect to cover any gap.
-- **Conflict UX** — on `409`, show "Trade was modified by someone else — reloaded latest" and refresh the form.
+- **`useTradeStream()`** — opens the `EventSource` from the list's `lastEventId`, merges each event into the TanStack Query cache through the pure `upsertTrade` (newer `version` wins), and reloads the list on `reset`.
+- **Conflict UX** — while amending, a banner appears as soon as the stream shows a newer version, with "Load latest". A stale save still gets `409`, shown in the form without losing input.
 - Sorting/filtering is client-side (fine at ≤1k rows). Server-side paging is the documented scale-up path.
 
 ---
@@ -150,7 +152,7 @@ App
 | `shared`            | Schema validation edge cases                                                          | Vitest                                                                       |
 | Backend unit        | `TradeService`: status transitions, version conflicts, event emission; seed generator | Vitest + PGlite (shared per file, truncated per test) + recording publisher  |
 | Backend integration | Full CRUD flow, error codes, SSE event after POST                                     | Fastify `inject()` against PGlite with migrations applied (no Docker needed) |
-| Frontend            | Form validation, stream→cache reducer, grid render smoke test                         | Vitest + React Testing Library                                               |
+| Frontend            | API client, cache merge, stream hook (fake `EventSource`), form logic and form UI     | Vitest + React Testing Library (jsdom)                                       |
 | E2E (optional)      | Two browser contexts — live update propagates                                         | Playwright, time permitting                                                  |
 
 ---
@@ -158,7 +160,7 @@ App
 ## 8. Running Locally
 
 - **Docker:** `docker compose up` → Postgres → backend (runs migrations + seed on boot) → frontend (static build served by nginx, proxying `/api`). Open `http://localhost:8080`.
-- **Without Docker:** `npm install && npm run dev`. With no `DATABASE_URL`, the backend falls back to file-backed PGlite; Vite proxies `/api` to the backend.
+- **Without Docker:** `npm install && npm run dev` (starts backend and frontend together), then open `http://localhost:5173`. With no `DATABASE_URL`, the backend falls back to file-backed PGlite; Vite proxies `/api` to the backend.
 - **OS agnostic:** no shell scripts — cross-platform npm scripts only; `.gitattributes` normalises line endings.
 
 ---
@@ -196,22 +198,33 @@ App
 ### Phase 3 — Frontend (~4h)
 
 - [x] Vite + React + TS scaffold (replaced Create React App), dev proxy to backend
-- [ ] Typed API client using shared types
-- [ ] TanStack Query hooks (`useTrades`, `useCreateTrade`, `useAmendTrade`, `useCancelTrade`)
-- [ ] `useTradeStream()` + reducer
-- [ ] `BlotterGrid` with AG Grid (formatters, row flash, cancelled styling)
-- [ ] Toolbar: quick filter, toggles, refresh, connection indicator
-- [ ] `TradeDrawer` (create/amend) with react-hook-form + shared schema
-- [ ] Cancel confirmation, toasts, 409 conflict handling, loading/error states
-- [ ] `PositionsPanel` (bonus)
-- [ ] Component + reducer tests
+- [x] Typed API client using shared types (responses validated with the shared schemas)
+- [x] TanStack Query hooks (`useTrades`, `useCreateTrade`, `useAmendTrade`, `useCancelTrade`)
+- [x] `useTradeStream()` + `upsertTrade` cache merge
+- [x] `BlotterGrid` with AG Grid (formatters, cell flash, cancelled styling)
+- [x] Toolbar: quick search, All / Active view, refresh; connection indicator in the stats bar
+- [x] `TradeForm` drawer (create/amend) with react-hook-form + shared schema, plus audit history
+- [x] Cancel confirmation, toasts, 409 conflict handling, loading/error states
+- [x] `PositionsPanel` (bonus)
+- [x] Component + hook + logic tests (26 frontend tests)
+- [x] Visual design: market-data style, light/dark theme, AG Grid theme from the same CSS tokens
+
+**Deviations from the original plan:**
+
+- The form validates with a small custom resolver around `CreateTradeSchema` instead of `zodResolver`: inputs hold text, and the resolver converts numbers and local time before validating, so messages match the server's exactly.
+- Amends send only the fields the user edited, so an untouched timestamp can't lose its milliseconds.
+- Conflicts are surfaced before saving: the drawer watches the live trade and offers "Load latest".
+- Positions are highlight cards above the grid instead of a side panel, leaving the grid full width.
+- No grid smoke test: AG Grid doesn't render meaningfully in jsdom; grid behaviour is checked by hand.
 
 ### Phase 4 — Packaging & Docs (~2h)
 
-- [ ] Dockerfiles (backend, frontend/nginx) + `docker-compose.yml` with healthchecks
-- [ ] Verify clean `docker compose up` and `npm run dev` from a fresh clone
-- [ ] README: architecture, install, run, test, assumptions, trade-offs
-- [ ] Finalise `AI_USAGE.md` and `PROMPT_LOG.md`
+- [x] Dockerfiles (backend, frontend/nginx) + `docker-compose.yml` with healthchecks
+- [x] Root `npm run dev` that starts backend and frontend together (`concurrently`, cross-platform)
+- [x] Verify clean `docker compose up` against real Postgres (migrate, seed, API and live stream through nginx)
+- [x] Verify `npm ci`, typecheck, tests, build and `npm run dev` from a fresh copy (PGlite)
+- [x] README: architecture, install, run, test, assumptions, trade-offs
+- [ ] Finalise `AI_USAGE.md` and the prompt log
 
 ### Phase 5 — Buffer (~1h)
 

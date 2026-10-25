@@ -25,7 +25,8 @@ export async function buildApp({ service, bus, logger = false, events = {} }: Ap
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler(notFoundHandler);
 
-  app.get('/health', () => ({ status: 'ok' }));
+  // Polled by container health checks, so its requests aren't logged.
+  app.get('/health', { logLevel: 'silent' }, () => ({ status: 'ok' }));
   await app.register(tradeRoutes, { prefix: '/api', service });
   await app.register(eventRoutes, { prefix: '/api', service, bus, ...events });
 

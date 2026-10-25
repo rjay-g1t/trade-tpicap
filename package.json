@@ -17,11 +17,13 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev": "concurrently --names backend,frontend --prefix-colors blue,green --kill-others-on-fail \"npm run dev -w @trade-blotter/backend\" \"npm run dev -w @trade-blotter/frontend\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
+    "concurrently": "^9.2.5",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
