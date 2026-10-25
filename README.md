@@ -52,16 +52,16 @@ the Docker stack ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Features
 
-| Area         | What it does                                                                                                                                               |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Blotter grid | Sort and filter on every column, quick search, "All / Active only" view, ~1,000 rows virtualised                                                           |
-| Book / amend | Side drawer validated with the same schema as the API; server errors appear under the right field                                                          |
-| Cancel       | Confirmation dialog; cancelled trades stay on the blotter, greyed out and read-only                                                                        |
-| Live updates | Changes from any client appear within a second; changed cells flash                                                                                        |
-| Conflicts    | Optimistic concurrency: if someone else changes a trade you are editing, a banner offers to load the latest version, and a stale save is rejected with 409 |
-| Audit trail  | Every create, amend and cancel is recorded with the before/after state and shown in the drawer                                                             |
-| Positions    | Net quantity and notional per symbol from active trades, shown as highlight cards                                                                          |
-| UX           | Light and dark themes, connection status, loading/error states, toasts                                                                                     |
+| Area         | What it does                                                                                                                                                                |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Blotter grid | Sort and filter on every column, quick search, "All / Active only" view, ~1,000 rows virtualised                                                                            |
+| Book / amend | Side drawer validated with the same schema as the API; server errors appear under the right field                                                                           |
+| Cancel       | Confirmation dialog; cancelled trades stay on the blotter, greyed out and read-only                                                                                         |
+| Live updates | Changes from any client appear within a second; changed cells flash                                                                                                         |
+| Conflicts    | Optimistic concurrency: if someone else changes a trade you are editing, a banner offers to load the latest version, and a stale save is rejected with 409                  |
+| Audit trail  | Every create, amend and cancel is recorded with the before/after state and shown in the drawer                                                                              |
+| Positions    | Net quantity and notional per symbol from active trades, shown as highlight cards                                                                                           |
+| UX           | Light and dark themes, connection status, loading/error states, toasts. Visual design inspired by CoinMarketCap's market tables (pill tabs, highlight cards, symbol badges) |
 
 ---
 

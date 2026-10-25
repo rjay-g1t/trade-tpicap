@@ -104,7 +104,7 @@ export function App() {
 
       <main className="container page">
         <section className="page-head">
-          <h1>Today’s trades</h1>
+          <h1>Trades</h1>
           <p className="muted">
             {summary.active} active trades across {summary.symbols} symbols, with a gross notional
             of {formatCompact(summary.grossNotional)}.{' '}
