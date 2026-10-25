@@ -1,0 +1,16 @@
+{
+  "name": "@trade-blotter/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API contract shared by backend and frontend: Zod schemas and inferred types.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}
