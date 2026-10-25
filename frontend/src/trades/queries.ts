@@ -9,7 +9,6 @@ export const queryKeys = {
   history: (tradeId: string) => ['trade-history', tradeId] as const,
 };
 
-
 export function useTrades() {
   return useQuery({
     queryKey: queryKeys.trades,

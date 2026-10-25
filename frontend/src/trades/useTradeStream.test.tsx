@@ -51,8 +51,7 @@ function renderStream(initial: TradeListResponse) {
     ({ lastEventId }: { lastEventId: number }) => useTradeStream(lastEventId),
     { wrapper, initialProps: { lastEventId: initial.lastEventId } },
   );
-  const cachedTrades = () =>
-    queryClient.getQueryData<TradeListResponse>(queryKeys.trades)?.trades;
+  const cachedTrades = () => queryClient.getQueryData<TradeListResponse>(queryKeys.trades)?.trades;
   return { queryClient, hook, cachedTrades };
 }
 

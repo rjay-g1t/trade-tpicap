@@ -64,7 +64,11 @@ export async function request<T>(
 function toApiError(status: number, payload: unknown): ApiRequestError {
   const parsed = ApiErrorSchema.safeParse(payload);
   if (!parsed.success) {
-    return new ApiRequestError(status, 'UNEXPECTED_RESPONSE', `Request failed with HTTP ${status}.`);
+    return new ApiRequestError(
+      status,
+      'UNEXPECTED_RESPONSE',
+      `Request failed with HTTP ${status}.`,
+    );
   }
   const { code, message, details = [] } = parsed.data.error;
   return new ApiRequestError(status, code, message, details);

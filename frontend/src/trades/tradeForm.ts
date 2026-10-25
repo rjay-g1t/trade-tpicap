@@ -30,8 +30,7 @@ export const TRADE_FORM_FIELDS = [
 export type TradeFormErrors = Partial<Record<TradeFormField, string>>;
 
 export type TradeFormResult =
-  | { success: true; data: CreateTrade }
-  | { success: false; errors: TradeFormErrors };
+  { success: true; data: CreateTrade } | { success: false; errors: TradeFormErrors };
 
 export const EMPTY_TRADE_FORM: TradeFormValues = {
   symbol: '',
