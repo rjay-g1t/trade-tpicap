@@ -34,11 +34,19 @@ npm run dev
 Open **http://localhost:5173**. With no `DATABASE_URL` set, the backend uses PGlite stored in
 `backend/.data/`, so no database server is needed. Vite proxies `/api` to the backend on port 3000.
 
-To use your own Postgres instead, set `DATABASE_URL`, e.g.
-`DATABASE_URL=postgres://user:pass@localhost:5432/blotter npm run dev`.
+To use your own Postgres instead, set `DATABASE_URL`:
+
+```bash
+# macOS / Linux
+DATABASE_URL=postgres://user:pass@localhost:5432/blotter npm run dev
+
+# Windows (PowerShell)
+$env:DATABASE_URL="postgres://user:pass@localhost:5432/blotter"; npm run dev
+```
 
 Both paths work on Windows, macOS and Linux: there are no shell scripts, and `.gitattributes`
-normalises line endings.
+normalises line endings. CI runs the install, typecheck, tests and build on all three, and boots
+the Docker stack ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ---
 
