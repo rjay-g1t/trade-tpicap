@@ -1,4 +1,4 @@
-import { TRADE_SSE_EVENT, type TradeEvent } from '@trade-blotter/shared';
+import { RESET_SSE_EVENT, TRADE_SSE_EVENT, type TradeEvent } from '@trade-blotter/shared';
 import type { ServerResponse } from 'node:http';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -12,9 +12,6 @@ export interface EventRoutesOptions {
   replayLimit?: number;
   heartbeatMs?: number;
 }
-
-/** Tells the client it missed too much to catch up and should refetch the blotter. */
-export const RESET_SSE_EVENT = 'reset';
 
 const EventsQuerySchema = z.object({
   lastEventId: z.coerce.number().int().nonnegative().optional(),

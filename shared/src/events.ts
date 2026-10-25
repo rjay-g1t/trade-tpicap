@@ -8,6 +8,9 @@ export type TradeEventKind = z.infer<typeof TradeEventKindSchema>;
 /** SSE event name used on the `/api/events` stream. */
 export const TRADE_SSE_EVENT = 'trade';
 
+/** Sent when a reconnecting client missed too much to replay; it should reload the blotter. */
+export const RESET_SSE_EVENT = 'reset';
+
 /**
  * A change to a trade, pushed to every connected client.
  *
